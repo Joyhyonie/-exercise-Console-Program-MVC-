@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <!-- 
+  		mapper를 DAO 인터페이스와 동일한 패키지에 두고 DAO 인터페이스의 풀네임을 namespace로 지정한다.
+  		또한 매퍼 인터페이스와 XML의 이름이 동일해야한다.
+  		작성한 메소드의 이름과 id가 일치하며 리턴 타입이 일치하는 쿼리문을 모두 작성해야 한다. 
+  -->
+<mapper namespace="com.joyhyonie.foodProducts.mapper.FoodProductsMapper">
+
+	<!-- 조회한 컬럼과 DTO를 매핑(연결)시키기 위한 설정으로 resultMap을 선언한다. -->
+	<resultMap type="com.joyhyonie.foodProducts.model.dto.FoodProductsDTO" id="foodProductsResultMap">
+		<id property="prodCode" column="PROD_CODE"/>
+		<result property="prodName" column="PROD_NAME"/>
+		<result property="price" column="PRICE"/>
+		<result property="supplierName" column="SUPPLIER_NAME"/>
+	</resultMap>
+	
+	<resultMap type="com.joyhyonie.foodProducts.model.dto.OrderHistoryDTO" id="orderHistoryResultMap">
+		<id property="orderCode" column="ORDER_CODE"/>
+		<result property="orderDate" column="ORDER_DATE"/>
+		<result property="orderTime" column="ORDER_TIME"/>
+		<result property="totalPrice" column="TOTAL_PRICE"/>
+	</resultMap>
+	
+	<resultMap type="com.joyhyonie.foodProducts.model.dto.StorageDTO" id="storageResultMap">
+		<id property="prodCode" column="PROD_CODE"/>
+		<result property="prodName" column="PROD_NAME"/>
+		<result property="incomingDate" column="INCOMING_DATE"/>
+	</resultMap>
+	
+	<resultMap type="com.joyhyonie.foodProducts.model.dto.SupplierDTO" id="supplierResultMap">
+		<id property="supplierCode" column="SUPPLIER_CODE"/>
+		<result property="categoryCode" column="CATEGORY_CODE"/>
+		<result property="supplierName" column="SUPPLIER_NAME"/>
+		<result property="address" column="ADDRESS"/>
+		<result property="contactNumber" column="CONTACT_NUMBER"/>
+		<result property="orderYn" column="ORDER_YN"/>
+		<association property="foodCategory" javaType="com.joyhyonie.foodProducts.model.dto.FoodCategoryDTO">
+			<id property="categoryCode" column="CATEGORY_CODE"/>
+			<result property="category" column="CATEGORY"/>
+		</association>
+	</resultMap>
+  
+  <select id="selectRandomProducts" parameterType="hashmap" resultMap="foodProductsResultMap">
+  SELECT
+    		PROD_CODE
+    	,	PROD_NAME
+    	,	PRICE
+    	,	SUPPLIER_NAME
+    	FROM TBL_PRODUCTS
+    	JOIN TBL_SUPPLIER USING(SUPPLIER_NAME)
+    	WHERE ORDER_YN = 'Y'
+    	AND PROD_CODE IN
+    	<foreach collection="randomProductsList" item="prodCode" open="(" separator="," close=")"> 
+    	<!-- : collection="randomMenuCodeList에 있는 List<Integer>를 사용할 것", item="변수명", open="시작할 때 필요한 문자", separator="분리기준", close="끝날 때 필요한 문자" -->
+    		#{ prodCode }
+    	</foreach>
+    	ORDER BY PROD_CODE
+  </select>
+  
+  <select id="selectProductsBySupplier" parameterType="SerchCriteria" resultMap="foodProductsResultMap"> 
+  SELECT
+    		PROD_CODE
+    	,	PROD_NAME
+    	,	PRICE
+    	,	SUPPLIER_NAME
+  		FROM TBL_PRODUCTS
+  		JOIN TBL_SUPPLIER USING(SUPPLIER_NAME)
+  		WHERE ORDER_YN = 'Y'
+  		<choose>
+  			<when test='value == "A"'>
+  			AND SUPPLIER_NAME = '굽네정육'</when>
+  			<when test='value == "B"'>
+  			AND SUPPLIER_NAME = '바다회사랑'</when>
+  			<when test='value == "C"'>
+  			AND SUPPLIER_NAME = 'SING싱채소'</when>
+  			<when test='value == "D"'>
+  			AND SUPPLIER_NAME = '베지상회'</when>
+  			<when test='value == "E"'>
+  			AND SUPPLIER_NAME = '치즈FARM'</when>
+  			<when test='value == "F"'>
+  			AND SUPPLIER_NAME = '얼음땡푸드'</when>
+  			<when test='value == "G"'>
+  			AND SUPPLIER_NAME = '짱구는말려'</when>
+  			<when test='value == "H"'>
+  			AND SUPPLIER_NAME = '꼬순내방앗간'</when>
+  			<when test='value == "I"'>
+  			AND SUPPLIER_NAME = 'EGG머니나'</when>
+  		</choose>
+  		ORDER BY PROD_CODE
+  		
+  </select>
+  
+  <select id="selectAllProducts" resultMap="foodProductsResultMap">
+  	SELECT
+    		PROD_CODE
+    	,	PROD_NAME
+    	,	PRICE
+    	,	SUPPLIER_NAME
+  		FROM TBL_PRODUCTS
+  </select>
+  
+  <insert id="insertOrderedProducts" parameterType="com.joyhyonie.foodProducts.model.dto.OrderHistoryDTO">
+  	INSERT
+  		INTO TBL_ORDER_HISTORY
+  	(
+  		ORDER_CODE
+	,	ORDER_DATE
+	,	ORDER_TIME
+	,	TOTAL_PRICE
+	)
+	VALUES
+	(
+		SEQ_ORDER_CODE.NEXTVAL
+	,	#{ orderDate }
+	,	#{ orderTime }
+	,	#{ totalPrice }
+  	)
+  </insert>
+  
+  <insert id="insertProductsToStorage" parameterType="com.joyhyonie.foodProducts.model.dto.StorageDTO">
+  	INSERT
+  		INTO TBL_STORAGE
+  	(
+  		PROD_CODE
+  	,	PROD_NAME
+  	,	INCOMING_DATE
+  	)
+  	VALUES
+  	(
+  		#{ prodCode }
+  	,	#{ prodName }
+  	,	#{ incomingDate	}
+  	)
+  </insert>
+  
+  <select id="selectProductsBySomething" parameterType="SerchCriteria" resultMap="storageResultMap">
+  	SELECT
+  			PROD_CODE
+  		,	PROD_NAME
+  		,	INCOMING_DATE
+  		FROM TBL_STORAGE
+  		<if test="condition == '재료명별'">
+  		WHERE PROD_NAME LIKE '%' || #{ value } || '%'
+  		</if>
+  		ORDER BY INCOMING_DATE
+  </select>
+  
+  <delete id="deletePickedProduct" parameterType="string">
+  	DELETE
+  		FROM TBL_STORAGE
+  		WHERE PROD_NAME = #{ prodName }
+  </delete>
+  
+  <update id="updatePickedProduct" parameterType="string">
+  	UPDATE
+  			TBL_STORAGE
+  		SET INCOMING_DATE = SYSDATE
+  		WHERE PROD_NAME = #{ prodName }
+  </update>
+  
+  <delete id="deleteOldProducts" parameterType="_int">
+  	DELETE
+  		FROM TBL_STORAGE
+  	 WHERE ROUND(MONTHS_BETWEEN(SYSDATE, INCOMING_DATE) * 24) >= #{ days } 
+  </delete>
+  
+  <insert id="insertNewProduct" parameterType="com.joyhyonie.foodProducts.model.dto.FoodProductsDTO">
+  	INSERT
+  		INTO TBL_PRODUCTS
+  	(
+  		PROD_CODE
+  	,	PROD_NAME
+  	,	PRICE
+  	,	SUPPLIER_NAME	
+  	)
+  	VALUES
+  	(
+  		SEQ_PROD_CODE.NEXTVAL
+  	,	#{ prodName }
+  	,	#{ price }
+ 	,	#{ supplierName }
+ 	)
+  </insert>
+  
+  <select id="selectAllSupplier" resultMap="supplierResultMap"> <!-- <association> 사용 -->
+  	SELECT
+  			A.CATEGORY_CODE
+  		,	A.SUPPLIER_CODE
+  		,	A.SUPPLIER_NAME
+  		,	A.ADDRESS
+  		,	A.CONTACT_NUMBER
+  		,	A.ORDER_YN
+  		,	B.CATEGORY
+  		FROM TBL_SUPPLIER A
+  		JOIN TBL_FOOD_CATEGORY B ON (A.CATEGORY_CODE = B.CATEGORY_CODE)
+  		ORDER BY CATEGORY_CODE
+  </select>
+  
+  <update id="updateSupplierInfo" parameterType="com.joyhyonie.foodProducts.model.dto.SupplierDTO">
+  	UPDATE
+  		TBL_SUPPLIER
+  	<trim prefix="SET" prefixOverrides=",">
+  		<if test="address != null and address !=''">
+  		ADDRESS = #{ address } </if>
+  		<if test="contactNumber != null and contactNumber !=''">
+  	,	CONTACT_NUMBER = #{ contactNumber } </if>
+  		<if test="orderYn != null and orderYn !=''">
+  	,	ORDER_YN = #{ orderYn } </if>
+  	</trim>
+  	WHERE SUPPLIER_NAME = #{ supplierName }
+  </update>
+  
+  <delete id="deleteSupplier" parameterType="string">
+  	DELETE
+  		FROM TBL_SUPPLIER
+  		WHERE SUPPLIER_NAME = #{ supplierName }
+  
+  </delete>
+  
+  <select id="selectOrderHistory" resultMap="orderHistoryResultMap">
+  	SELECT
+  		ORDER_CODE
+	,	ORDER_DATE
+	,	ORDER_TIME
+	,	TOTAL_PRICE
+	FROM TBL_ORDER_HISTORY
+	ORDER BY ORDER_DATE <if test="range == '최신순'">DESC</if>, ORDER_TIME <if test="range == '최신순'">DESC</if>
+  </select>
+
+</mapper>
