@@ -58,16 +58,22 @@ public class FoodProductsService {
 		return allproductsList;
 	}
 	
-	/* [1-3B] 주문한 내역 저장하기 */
+	/* [1-3B] 주문한 내역 저장하기 / [1-3C] 주문한 재료 저장고에 추가하기 */
 	public boolean insertOrderedProducts(OrderHistoryDTO order) {
 		
 		SqlSession sqls = getSqlSession();
 		mapper = sqls.getMapper(FoodProductsMapper.class);
 		
-		/* INSERT이므로 int로 반환받기 */
-		int result = mapper.insertOrderedProducts(order);
+		/* 주문한 내역 저장하기 */
+		int result1 = mapper.insertOrderedProducts(order);
 		
-		if(result > 0) {
+		/* 주문한 재료 저장고에 추가하기 */
+		int result2 = 0;
+		for(StorageDTO storage : order.getStorageDTO()) {
+			result2 += mapper.insertProductsToStorage(storage);			
+		}
+		
+		if(result1 > 0 && result2 > 0) { // 주문 내역과 재료들이 모두 정상적으로 INSERT되었을 때, commit (하나의 트랜잭션 안에서 수행)
 			sqls.commit();
 		} else {
 			sqls.rollback();
@@ -75,7 +81,7 @@ public class FoodProductsService {
 		
 		sqls.close();
 		
-		return result > 0 ? true : false;
+		return result1 > 0 && result2 > 0 ? true : false;
 	}
 
 	/* [1-3C] 주문한 재료 저장고에 추가하기 */
@@ -87,8 +93,7 @@ public class FoodProductsService {
 		/* INSERT이므로 int로 반환받기 */
 		int result = 0;
 		for(StorageDTO storage : productsToStorageList) {
-			mapper.insertProductsToStorage(storage);
-			result++;
+			result += mapper.insertProductsToStorage(storage);
 		}
 		
 		if(result > 0) {

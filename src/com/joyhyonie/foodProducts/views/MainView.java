@@ -165,7 +165,8 @@ public class MainView {
 			
 		} while(true);
 		
-		fpController.insertProductsToStorage(productsToStorageList);
+//		fpController.insertProductsToStorage(productsToStorageList);
+//		재료를 추가하는 것은 주문내역과 함께 INSERT 되어야함
 		
 		for(OrderProductsDTO orderMenu : orderProductsList) {
 			System.out.println(orderMenu);
@@ -184,6 +185,10 @@ public class MainView {
 		order.setOrderDate(date);
 		order.setOrderTime(time);
 		order.setTotalPrice(totalPrice);
+		order.setStorageDTO(productsToStorageList); 
+		/* 주문내역과 주문한 재료를 하나의 트랜잭션 안에서 INSERT하기 위해 (둘 중에 하나라도 문제가 있다면, 나머지 하나도 작동되어선 안됨)
+		 * StorageDTO를 OrderHistoryDTO의 필드에 선언한 뒤,
+		 * productsToStorageList를 StorageDTO에 set하여 함께 인자로 전달 */
 		
 		return order;
 	}

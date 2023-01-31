@@ -55,7 +55,7 @@ public class FoodProductsController {
 		return allProductsList;
 	}
 
-	/* [1-3B] 주문한 내역 저장하기 */
+	/* [1-3B] 주문한 내역 저장하기 / [1-3C] 주문한 재료 저장고에 추가하기 */
 	public void insertOrderedProducts(OrderHistoryDTO order) {
 		
 		if(fpService.insertOrderedProducts(order)) {
@@ -66,11 +66,11 @@ public class FoodProductsController {
 	}
 
 	/* [1-3C] 주문한 재료 저장고에 추가하기 */
-	public void insertProductsToStorage(List<StorageDTO> productsToStorageList) {
-	
-		if(!fpService.insertProductsToStorage(productsToStorageList))
-			rView.printErrorMessage("failInsertProductsToStorage");
-	}
+//	public void insertProductsToStorage(List<StorageDTO> productsToStorageList) {
+//	
+//		if(!fpService.insertProductsToStorage(productsToStorageList))
+//			rView.printErrorMessage("failInsertProductsToStorage");
+//	}
 
 	/* [2-1] 재료 파악하기 */
 	public void selectProductsBySomething(SearchCriteria searchCriteria) {
